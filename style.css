@@ -103,7 +103,6 @@ button { font: inherit; cursor: pointer; }
 .mark.active .lbl b { color: var(--accent); }
 
 .era { position: absolute; transform: translateX(-50%); white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.track .soon { position: absolute; transform: translateY(-50%); font-size: 11px; font-style: italic; color: var(--muted); white-space: nowrap; }
 
 
 .exhibit {

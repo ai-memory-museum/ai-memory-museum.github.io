@@ -59,7 +59,7 @@
 
   const LANE = 24;
   let GAP = 12;
-  const STUB = 110;
+  const STUB = 24;
   const ERAS = [
     { to: 1984, name: t('Первые собеседники', 'The first talkers') },
     { to: 2008, name: t('Домашние компьютеры и интернет', 'Home computers and the internet') },
@@ -69,7 +69,7 @@
   let groups = [];
 
   function buildTimeline() {
-    track.innerHTML = '<svg class="rails" aria-hidden="true"></svg><span class="soon">' + t('строится…', 'under construction…') + '</span>';
+    track.innerHTML = '<svg class="rails" aria-hidden="true"></svg>';
     groups = [];
     BOTS.forEach((b) => {
       const g = groups[groups.length - 1];
@@ -147,8 +147,7 @@
       g.x += i * extra;
       g.pos = g.pos.map((p) => p + i * extra);
     });
-    const path = (d, dashed) => `<path d="${d}"${dashed ? ' stroke-dasharray="4 6"' : ''}/>`;
-    const last = groups[groups.length - 1];
+    const path = (d) => `<path d="${d}"/>`;
     let svg = '';
     groups.forEach((g, i) => {
       const next = groups[i + 1];
@@ -162,11 +161,7 @@
         if (xs.length) svg += path(`M${g.x} ${top} L${g.x + LANE} ${top + side * LANE} L${Math.max(...xs)} ${top + side * LANE}`);
       });
     });
-    svg += path(`M${last.x} ${top} L${last.x + 44} ${top}`, true);
     track.querySelector('.rails').innerHTML = svg;
-    const soon = track.querySelector('.soon');
-    soon.style.left = last.x + 52 + 'px';
-    soon.style.top = top + 'px';
     const eraEls = [...track.querySelectorAll('.era')];
     const centers = eraEls.map((el) => {
       const xs = groups.filter((g) => g.era === +el.dataset.era).map((g) => g.x);
