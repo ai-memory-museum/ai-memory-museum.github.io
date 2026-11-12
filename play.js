@@ -21,10 +21,8 @@
     }
   }
 
-  // Разговор двух ботов
-  const a = document.getElementById('duelA');
-  const b = document.getElementById('duelB');
-  const go = document.getElementById('duelGo');
+  const sides = [document.getElementById('duelA'), document.getElementById('duelB')];
+  const startBtn = document.getElementById('duelGo');
   const log = document.getElementById('duelLog');
   const picker = document.getElementById('duelPick');
   const HALLS = [1984, 2008, 2019, 9999];
@@ -49,13 +47,13 @@
   }
   function choose(k, i) {
     pick[k] = i;
-    side([a, b][k], k);
+    side(sides[k], k);
     chips();
     run++;
     log.innerHTML = '';
-    go.textContent = t('Начать разговор', 'Start the conversation');
+    startBtn.textContent = t('Начать разговор', 'Start the conversation');
   }
-  [a, b].forEach((el, k) => {
+  sides.forEach((el, k) => {
     side(el, k);
     el.addEventListener('click', (e) => {
       const step = e.target.closest('[data-step]');
@@ -86,7 +84,7 @@
   async function duel() {
     const id = ++run;
     log.innerHTML = '';
-    go.textContent = t('Заново', 'Again');
+    startBtn.textContent = t('Заново', 'Again');
     const pair = pick.map((i) => PLAYERS[i]);
     const engines = pair.map(local);
     let line = asText(engines[0].greet());
@@ -105,5 +103,5 @@
       say(pair[k], line, k);
     }
   }
-  go.addEventListener('click', duel);
+  startBtn.addEventListener('click', duel);
 })();

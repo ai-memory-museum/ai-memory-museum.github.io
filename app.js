@@ -25,8 +25,8 @@
   const keybar = $('keybar');
   const keyInput = $('keyInput');
   const keyDel = $('keyDel');
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = null;
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
 
   const ORIGIN = {
     original: t('Оригинальные правила · перевод', 'Original rules'),
@@ -147,22 +147,22 @@
       g.x += i * extra;
       g.pos = g.pos.map((p) => p + i * extra);
     });
-    const line = (d, dash) => `<path d="${d}"${dash ? ' stroke-dasharray="4 6"' : ''}/>`;
+    const path = (d, dashed) => `<path d="${d}"${dashed ? ' stroke-dasharray="4 6"' : ''}/>`;
     const last = groups[groups.length - 1];
     let svg = '';
     groups.forEach((g, i) => {
       const next = groups[i + 1];
-      if (next) svg += line(`M${g.x} ${top} L${next.x} ${top}`);
+      if (next) svg += path(`M${g.x} ${top} L${next.x} ${top}`);
       g.marks.forEach((m, k) => {
         m.style.left = g.pos[k] + 'px';
         m.style.top = top + g.sides[k] * LANE + 'px';
       });
       [-1, 1].forEach((side) => {
         const xs = g.pos.filter((_, k) => g.sides[k] === side);
-        if (xs.length) svg += line(`M${g.x} ${top} L${g.x + LANE} ${top + side * LANE} L${Math.max(...xs)} ${top + side * LANE}`);
+        if (xs.length) svg += path(`M${g.x} ${top} L${g.x + LANE} ${top + side * LANE} L${Math.max(...xs)} ${top + side * LANE}`);
       });
     });
-    svg += line(`M${last.x} ${top} L${last.x + 44} ${top}`, true);
+    svg += path(`M${last.x} ${top} L${last.x + 44} ${top}`, true);
     track.querySelector('.rails').innerHTML = svg;
     const soon = track.querySelector('.soon');
     soon.style.left = last.x + 52 + 'px';
@@ -264,10 +264,10 @@
 
   function speak(text, voice) {
     if (!voiceOn || !('speechSynthesis' in window)) return;
-    const u = new SpeechSynthesisUtterance(text.toLowerCase());
-    u.lang = t('ru-RU', 'en-US');
-    u.pitch = voice.pitch ?? 0.2;
-    u.rate = voice.rate ?? 0.85;
+    const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
+    utterance.lang = t('ru-RU', 'en-US');
+    utterance.pitch = voice.pitch ?? 0.2;
+    utterance.rate = voice.rate ?? 0.85;
     const all = speechSynthesis.getVoices();
     if (!all.length && !voice.waited) {
       let done = false;
@@ -280,22 +280,23 @@
       setTimeout(again, 1000);
       return;
     }
-    const lang = (x) => x.lang.replace('_', '-');
-    const list = all.filter((x) => lang(x).startsWith(t('ru', 'en')));
-    const named = (x, n) => x.name.startsWith(n) || x.voiceURI.includes('.' + n);
-    const quality = (x) => (/premium/i.test(x.voiceURI) ? 2 : /enhanced/i.test(x.voiceURI) ? 1 : 0);
-    const best = (xs) => xs.sort((p, q) => quality(q) - quality(p) || lang(q).startsWith(t('ru', 'en')) - lang(p).startsWith(t('ru', 'en')))[0];
-    let v;
-    for (const n of voice.names || []) if ((v = best(all.filter((x) => named(x, n))))) break;
-    v = v || best(list.filter((x) => !(voice.avoid || []).some((n) => named(x, n)))) || list[0];
-    if (v) {
-      u.voice = v;
-      if (!lang(v).startsWith(t('ru', 'en'))) {
-        u.lang = v.lang;
-        u.text = translit(u.text);
+    const wanted = t('ru', 'en');
+    const lang = (v) => v.lang.replace('_', '-');
+    const sameLang = all.filter((v) => lang(v).startsWith(wanted));
+    const named = (v, name) => v.name.startsWith(name) || v.voiceURI.includes('.' + name);
+    const quality = (v) => (/premium/i.test(v.voiceURI) ? 2 : /enhanced/i.test(v.voiceURI) ? 1 : 0);
+    const best = (list) => list.sort((p, q) => quality(q) - quality(p) || lang(q).startsWith(wanted) - lang(p).startsWith(wanted))[0];
+    let chosen;
+    for (const name of voice.names || []) if ((chosen = best(all.filter((v) => named(v, name))))) break;
+    chosen = chosen || best(sameLang.filter((v) => !(voice.avoid || []).some((name) => named(v, name)))) || sameLang[0];
+    if (chosen) {
+      utterance.voice = chosen;
+      if (!lang(chosen).startsWith(wanted)) {
+        utterance.lang = chosen.lang;
+        utterance.text = translit(utterance.text);
       }
     }
-    speechSynthesis.speak(u);
+    speechSynthesis.speak(utterance);
   }
 
   const LAT = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'ye', ё: 'yo', ж: 'zh', з: 'z', и: 'ee', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'oo', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
@@ -385,8 +386,8 @@
     voiceBtn.classList.toggle('on', voiceOn);
     keyBtn.hidden = !s.engine.keyed;
     keybar.hidden = true;
-    micBtn.hidden = !(s.engine.listen && SR);
-    if (rec) rec.stop();
+    micBtn.hidden = !(s.engine.listen && Recognition);
+    if (recognition) recognition.stop();
     const shown = s.fresh ? [] : s.messages;
     shown.forEach((m) => {
       const { el, text } = line(m, bot);
@@ -398,13 +399,13 @@
       s.fresh = false;
     }
     chips.innerHTML = '';
-    (bot.tries || []).forEach((t) => {
-      const c = document.createElement('button');
-      c.type = 'button';
-      c.className = 'chip';
-      c.textContent = t;
-      c.addEventListener('click', () => send(t));
-      chips.appendChild(c);
+    (bot.tries || []).forEach((hint) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = hint;
+      chip.addEventListener('click', () => send(hint));
+      chips.appendChild(chip);
     });
     renderMeters(s);
     screen.scrollTop = screen.scrollHeight;
@@ -433,7 +434,7 @@
     }
     await new Promise((r) => setTimeout(r, Math.max(0, 450 - (Date.now() - started))));
     s.waiting = false;
-    s.queue.push(...answer.map((t) => ({ who: 'bot', text: t })));
+    s.queue.push(...answer.map((text) => ({ who: 'bot', text })));
     if (current === bot) renderMeters(s);
     drain(bot, s);
   }
@@ -482,50 +483,52 @@
   };
 
   keyBtn.addEventListener('click', () => {
-    const k = current && session(current).engine.keyed;
-    if (!k) return;
+    const keyed = current && session(current).engine.keyed;
+    if (!keyed) return;
     keybar.hidden = !keybar.hidden;
-    const saved = window.MU.store.get('museum-key-' + k.id, '');
+    const saved = window.MU.store.get('museum-key-' + keyed.id, '');
     keyInput.value = '';
-    keyInput.placeholder = saved ? t(`${k.label} сохранён — вставьте новый, чтобы заменить`, `${k.label} is saved — paste a new one to replace it`) : t(`вставьте ${k.label} (${k.hint}) с ${k.where}`, `paste your ${k.label} (${k.hint}) from ${k.where}`);
+    keyInput.placeholder = saved
+      ? t(`${keyed.label} сохранён — вставьте новый, чтобы заменить`, `${keyed.label} is saved — paste a new one to replace it`)
+      : t(`вставьте ${keyed.label} (${keyed.hint}) с ${keyed.where}`, `paste your ${keyed.label} (${keyed.hint}) from ${keyed.where}`);
     keyDel.hidden = !saved;
     if (!keybar.hidden) keyInput.focus();
   });
 
   keybar.addEventListener('submit', (e) => {
     e.preventDefault();
-    const k = session(current).engine.keyed;
-    const v = keyInput.value.trim();
-    if (!k || !v) return;
-    window.MU.store.set('museum-key-' + k.id, v);
+    const keyed = session(current).engine.keyed;
+    const value = keyInput.value.trim();
+    if (!keyed || !value) return;
+    window.MU.store.set('museum-key-' + keyed.id, value);
     keyInput.value = '';
     keybar.hidden = true;
     note(t('Ключ сохранён в этом браузере. Можно говорить.', 'The key is saved in this browser. You can talk now.'));
   });
 
   keyDel.addEventListener('click', () => {
-    const k = session(current).engine.keyed;
-    if (!k) return;
-    window.MU.store.set('museum-key-' + k.id, '');
+    const keyed = session(current).engine.keyed;
+    if (!keyed) return;
+    window.MU.store.set('museum-key-' + keyed.id, '');
     keybar.hidden = true;
     note(t('Ключ удалён из этого браузера.', 'The key was removed from this browser.'));
   });
 
   micBtn.addEventListener('click', () => {
-    if (rec) {
-      rec.stop();
+    if (recognition) {
+      recognition.stop();
       return;
     }
-    rec = new SR();
-    rec.lang = t('ru-RU', 'en-US');
-    rec.interimResults = false;
+    recognition = new Recognition();
+    recognition.lang = t('ru-RU', 'en-US');
+    recognition.interimResults = false;
     micBtn.classList.add('on');
-    rec.onresult = (e) => send(e.results[0][0].transcript);
-    rec.onend = () => {
-      rec = null;
+    recognition.onresult = (e) => send(e.results[0][0].transcript);
+    recognition.onend = () => {
+      recognition = null;
       micBtn.classList.remove('on');
     };
-    rec.start();
+    recognition.start();
   });
 
   voiceBtn.addEventListener('click', () => {
@@ -537,15 +540,15 @@
 
   window.addEventListener('hashchange', () => go(location.hash.slice(1)));
   function fitName() {
-    const h = chatHead.querySelector('.ch-name');
-    const k = chatHead.querySelector('.ch-kicker');
-    h.style.fontSize = '';
-    k.style.fontSize = '';
+    const name = chatHead.querySelector('.ch-name');
+    const kicker = chatHead.querySelector('.ch-kicker');
+    name.style.fontSize = '';
+    kicker.style.fontSize = '';
     if (innerWidth > 900) return;
-    let f = 52;
-    while (h.scrollWidth > h.clientWidth && f > 26) h.style.fontSize = `${(f -= 2)}px`;
-    let g = 11;
-    while (k.scrollWidth > k.clientWidth && g > 8) k.style.fontSize = `${(g -= 0.5)}px`;
+    let nameSize = 52;
+    while (name.scrollWidth > name.clientWidth && nameSize > 26) name.style.fontSize = `${(nameSize -= 2)}px`;
+    let kickerSize = 11;
+    while (kicker.scrollWidth > kicker.clientWidth && kickerSize > 8) kicker.style.fontSize = `${(kickerSize -= 0.5)}px`;
   }
   addEventListener('resize', fitName);
 

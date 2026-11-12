@@ -44,17 +44,17 @@
     return a;
   }
 
-  function verdict(s, all) {
-    if (s === all) return t('Идеально! Ни одна программа вас не обманула — вы оказались строже настоящих судей.', 'Perfect! Not a single program fooled you — you were stricter than the real judges.');
-    if (s >= all - 2) return t('Отличный результат. Вы почти всегда находили человека, хотя настоящие судьи в этих же разговорах часто ошибались.', 'Great result. You almost always found the human, even though the real judges often got these same chats wrong.');
-    if (s >= Math.ceil(all / 2) - 1) return t('Примерно как настоящие судьи: иногда угадывали, иногда нет. По короткой переписке машину отличить трудно — на это и рассчитывал Тьюринг.', 'About as good as the real judges: sometimes right, sometimes not. It is hard to spot a machine in a short chat — just as Turing expected.');
-    if (s > 0) return t('Программы обманывали вас часто — но не расстраивайтесь: настоящих судей в этих разговорах они тоже часто обманывали.', 'The programs fooled you often — but don’t worry: they often fooled the real judges in these chats too.');
+  function verdict(score, total) {
+    if (score === total) return t('Идеально! Ни одна программа вас не обманула — вы оказались строже настоящих судей.', 'Perfect! Not a single program fooled you — you were stricter than the real judges.');
+    if (score >= total - 2) return t('Отличный результат. Вы почти всегда находили человека, хотя настоящие судьи в этих же разговорах часто ошибались.', 'Great result. You almost always found the human, even though the real judges often got these same chats wrong.');
+    if (score >= Math.ceil(total / 2) - 1) return t('Примерно как настоящие судьи: иногда угадывали, иногда нет. По короткой переписке машину отличить трудно — на это и рассчитывал Тьюринг.', 'About as good as the real judges: sometimes right, sometimes not. It is hard to spot a machine in a short chat — just as Turing expected.');
+    if (score > 0) return t('Программы обманывали вас часто — но не расстраивайтесь: настоящих судей в этих разговорах они тоже часто обманывали.', 'The programs fooled you often — but don’t worry: they often fooled the real judges in these chats too.');
     return t('Программы победили во всех раундах! Для них это лучший результат: именно так машина проходит тест Тьюринга.', 'The programs won every round! For them that is the best result: this is exactly how a machine passes the Turing test.');
   }
 
-  function label(s) {
-    const text = en ? s.en : s.ru;
-    const link = `<a href="${s.url}" target="_blank" rel="noopener">${s.cite}</a>`;
+  function label(source) {
+    const text = en ? source.en : source.ru;
+    const link = `<a href="${source.url}" target="_blank" rel="noopener">${source.cite}</a>`;
     return `<div class="tt-label tt-label-a"><span class="tt-badge">${t('Настоящая запись', 'Real transcript')}</span><p>${text} <span class="tt-src">${link}</span></p></div>`;
   }
 
@@ -62,10 +62,10 @@
     return `<div class="guess-dots">${ROUNDS.map((_, i) => `<i class="${i < game.marks.length ? (game.marks[i] ? 'ok' : 'no') : i === game.n ? 'now' : ''}"></i>`).join('')}</div>`;
   }
 
-  function chat(c, i) {
+  function chat(partner, i) {
     return `<article class="tt-chat" data-i="${i}">
       <span class="tt-n">${t('Собеседник', 'Partner')} ${i + 1}</span>
-      <div class="tt-log">${c.lines.map(([w, orig, ru]) => `<p class="tt-${w}">${esc(en ? orig : ru)}</p>`).join('')}</div>
+      <div class="tt-log">${partner.lines.map(([who, original, ru]) => `<p class="tt-${who}">${esc(en ? original : ru)}</p>`).join('')}</div>
       <div class="tt-reveal"></div>
       <button type="button" class="tt-pick">${t('Это человек', 'This is the human')}</button>
     </article>`;
@@ -138,14 +138,14 @@
     if (ok) game.score++;
     game.marks.push(ok);
     box.querySelectorAll('.tt-chat').forEach((el, k) => {
-      const c = r.chats[k];
-      el.classList.add(c.human ? 'is-human' : 'is-machine');
+      const partner = r.chats[k];
+      el.classList.add(partner.human ? 'is-human' : 'is-machine');
       if (k === i) el.classList.add(ok ? 'picked-right' : 'picked-wrong');
       el.querySelector('.tt-pick').remove();
       el.querySelector('.tt-reveal').innerHTML = `
-        <p class="tt-who">${c.human ? t('Человек', 'Human') : t('Программа', 'Program')}${pick(c.who) ? ': ' + pick(c.who) : ''}</p>
-        <p class="tt-judge">${t('Судья тогда', 'The judge at the time')} ${pick(c.judge)}.</p>`;
-      ui.tabs[k].classList.add(c.human ? 'is-human' : 'is-machine');
+        <p class="tt-who">${partner.human ? t('Человек', 'Human') : t('Программа', 'Program')}${pick(partner.who) ? ': ' + pick(partner.who) : ''}</p>
+        <p class="tt-judge">${t('Судья тогда', 'The judge at the time')} ${pick(partner.judge)}.</p>`;
+      ui.tabs[k].classList.add(partner.human ? 'is-human' : 'is-machine');
       if (k === i && !ok) ui.tabs[k].classList.add('picked-wrong');
     });
     const score = `${game.score} / ${game.n + 1}`;
@@ -157,22 +157,22 @@
     const after = box.querySelector('.tt-after');
     after.innerHTML = `${result}${dots()}<button type="button" class="guess-next">${last}</button>`;
     after.querySelector('.guess-next').addEventListener('click', next);
-    const s = SRC[r.src];
+    const source = SRC[r.src];
     ui.done = true;
-    ui.bar.innerHTML = `${result}<p class="tt-src"><a href="${s.url}" target="_blank" rel="noopener">${s.cite}</a></p><button type="button" class="tt-go">${last}</button>`;
+    ui.bar.innerHTML = `${result}<p class="tt-src"><a href="${source.url}" target="_blank" rel="noopener">${source.cite}</a></p><button type="button" class="tt-go">${last}</button>`;
     ui.bar.querySelector('.tt-go').addEventListener('click', next);
     ui.show(i);
   }
 
   function finish() {
     document.body.classList.remove('tt-full');
-    const s = game.score;
-    const all = ROUNDS.length;
+    const score = game.score;
+    const total = ROUNDS.length;
     box.innerHTML = `
       <div class="tt-end">
-        <p class="guess-score">${s} ${t('из', 'out of')} ${all}</p>
+        <p class="guess-score">${score} ${t('из', 'out of')} ${total}</p>
         ${dots()}
-        <p class="tt-verdict">${verdict(s, all)}</p>
+        <p class="tt-verdict">${verdict(score, total)}</p>
         <p>${t(
           'В 1950 году Тьюринг предсказал, что примерно через 50 лет средний судья после 5 минут разговора будет угадывать правильно не больше чем в 70% случаев. В исследовании 2024 года GPT-4 принимали за человека в 54% игр, ELIZA — в 22%, а настоящих людей — в 67%. А в исследовании 2025 года GPT-4.5 выбирали человеком в 73% игр — чаще, чем самих людей.',
           'In 1950 Turing predicted that in about 50 years an average judge would have no more than a 70% chance of making the right identification after 5 minutes of questioning. In the 2024 study, GPT-4 was judged to be human in 54% of games, ELIZA in 22%, and real humans in 67%. And in the 2025 study, GPT-4.5 was picked as the human in 73% of games — more often than the humans themselves.',
@@ -181,7 +181,7 @@
           'Все переписки настоящие и взяты из научных статей (лицензия CC BY 4.0). Перевод на русский сделан для этого музея; опечатки оригинала по возможности сохранены, пояснения переводчика — в квадратных скобках.',
           'All transcripts are real and come from scientific papers (CC BY 4.0 license). Original spelling and typos are kept.',
         )}</p>
-        <ul class="tt-sources">${Object.values(SRC).map((x) => `<li><a href="${x.url}" target="_blank" rel="noopener">${x.cite}</a></li>`).join('')}</ul>
+        <ul class="tt-sources">${Object.values(SRC).map((source) => `<li><a href="${source.url}" target="_blank" rel="noopener">${source.cite}</a></li>`).join('')}</ul>
         <div class="tt-end-btns">
           <button type="button" class="guess-next" id="turingClose">${t('К началу', 'Back to start')}</button>
         </div>
@@ -201,7 +201,7 @@
         <p class="tt-facts">${t(`${ROUNDS.length} раундов · ${Object.keys(SRC).length} исследования · около 5 минут`, `${ROUNDS.length} rounds · ${Object.keys(SRC).length} studies · about 5 minutes`)}</p>
         <details class="tt-more">
           <summary>${t('Откуда эти записи', 'Where these transcripts come from')}</summary>
-          <ul class="tt-sources">${Object.values(SRC).map((x) => `<li><a href="${x.url}" target="_blank" rel="noopener">${x.cite}</a></li>`).join('')}</ul>
+          <ul class="tt-sources">${Object.values(SRC).map((source) => `<li><a href="${source.url}" target="_blank" rel="noopener">${source.cite}</a></li>`).join('')}</ul>
           <p class="tt-note">${t(
             'Статьи опубликованы под лицензией CC BY 4.0. Перевод на русский сделан для этого музея; опечатки оригинала по возможности сохранены, пояснения переводчика — в квадратных скобках.',
             'The papers are published under the CC BY 4.0 license. Original spelling and typos are kept.',

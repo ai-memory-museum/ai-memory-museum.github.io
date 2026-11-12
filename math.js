@@ -67,7 +67,6 @@
 
     <a class="talk" href="index.html#compare">${t('Сравнить ботов на одном вопросе →', 'Compare the bots on one question →')}</a>`;
 
-  // Цепь Маркова
   const END = '.';
   const words = (s) => s.toLowerCase().replace(/[!?]/g, '.').match(/[a-zа-яё0-9-]+|\./g) || [];
   let chain = null;
@@ -103,38 +102,38 @@
     document.getElementById('mkOut').innerHTML = '';
   }
 
-  function pick(m) {
-    const n = [...m.values()].reduce((a, b) => a + b, 0);
-    let r = Math.random() * n;
-    for (const [w, c] of m) {
-      r -= c;
-      if (r < 0) return [w, c, n];
+  function pickWeighted(counts) {
+    const total = [...counts.values()].reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (const [word, count] of counts) {
+      r -= count;
+      if (r < 0) return [word, count, total];
     }
-    const [w, c] = [...m.entries()].pop();
-    return [w, c, n];
+    const [word, count] = [...counts.entries()].pop();
+    return [word, count, total];
   }
 
   function generate() {
     if (!chain) build();
     if (!chain.starts.size) return;
     const steps = [];
-    let [w, c, n] = pick(chain.starts);
-    steps.push({ w, c, n, first: true });
-    for (let i = 0; i < 20 && chain.next.has(w); i++) {
-      [w, c, n] = pick(chain.next.get(w));
-      if (w === END) break;
-      steps.push({ w, c, n });
+    let [word, count, total] = pickWeighted(chain.starts);
+    steps.push({ word, count, total, first: true });
+    for (let i = 0; i < 20 && chain.next.has(word); i++) {
+      [word, count, total] = pickWeighted(chain.next.get(word));
+      if (word === END) break;
+      steps.push({ word, count, total });
     }
-    const phrase = steps.map((s) => s.w).join(' ');
+    const phrase = steps.map((s) => s.word).join(' ');
     const isNew = !chain.text.includes(phrase + ' .');
-    const frac = steps.filter((s) => !s.first).map((s) => `${s.c}/${s.n}`);
-    const p = steps.filter((s) => !s.first).reduce((a, s) => a * (s.c / s.n), 1);
+    const fractions = steps.filter((s) => !s.first).map((s) => `${s.count}/${s.total}`);
+    const probability = steps.filter((s) => !s.first).reduce((acc, s) => acc * (s.count / s.total), 1);
     document.getElementById('mkOut').innerHTML = `
       <p class="mk-phrase">${phrase.charAt(0).toUpperCase() + phrase.slice(1)}.</p>
-      <p class="mk-steps">${steps.map((s, i) => (i ? `→ <b>${s.w}</b> <span>(${s.c}/${s.n})</span>` : `<b>${s.w}</b>`)).join(' ')}</p>
+      <p class="mk-steps">${steps.map((s, i) => (i ? `→ <b>${s.word}</b> <span>(${s.count}/${s.total})</span>` : `<b>${s.word}</b>`)).join(' ')}</p>
       <p class="mk-note">${
-        frac.length
-          ? `${t('Вероятность выбрать такую цепочку после первого слова', 'The probability of this chain after the first word')}: ${frac.join(' × ')} = ${Math.round(p * 1000) / 10}%. `
+        fractions.length
+          ? `${t('Вероятность выбрать такую цепочку после первого слова', 'The probability of this chain after the first word')}: ${fractions.join(' × ')} = ${Math.round(probability * 1000) / 10}%. `
           : ''
       }${isNew ? t('Такой фразы в тексте не было — программа её «сочинила».', 'This sentence was not in the text — the program “made it up”.') : t('Эта фраза есть в тексте целиком.', 'This exact sentence is in the text.')} ${t('Цепь помнит только одно предыдущее слово, поэтому иногда выходит чепуха. Нажмите ещё раз.', 'The chain remembers only one previous word, so sometimes it talks nonsense. Press again.')}</p>`;
   }
@@ -143,44 +142,43 @@
   document.getElementById('mkGen').addEventListener('click', generate);
   build();
 
-  // Нейрон
   const INPUTS = [
-    { name: t('солнечно', 'it is sunny'), w: 2 },
-    { name: t('выходной', 'it is a day off'), w: 1 },
-    { name: t('много домашки', 'lots of homework'), w: -2 },
+    { name: t('солнечно', 'it is sunny'), weight: 2 },
+    { name: t('выходной', 'it is a day off'), weight: 1 },
+    { name: t('много домашки', 'lots of homework'), weight: -2 },
   ];
-  const state = { x: [1, 0, 1], w: INPUTS.map((i) => i.w), th: 1 };
+  const state = { inputs: [1, 0, 1], weights: INPUTS.map((i) => i.weight), threshold: 1 };
   const neuron = document.getElementById('neuron');
 
   neuron.innerHTML = `
     ${INPUTS.map(
       (inp, i) => `<div class="nr-row">
-        <label class="nr-in"><input type="checkbox" data-x="${i}" ${state.x[i] ? 'checked' : ''}> ${inp.name} <span data-xv="${i}"></span></label>
-        <label class="nr-w">${t('вес', 'weight')} <input type="range" min="-3" max="3" step="1" value="${state.w[i]}" data-w="${i}"> <b data-wv="${i}"></b></label>
+        <label class="nr-in"><input type="checkbox" data-x="${i}" ${state.inputs[i] ? 'checked' : ''}> ${inp.name} <span data-xv="${i}"></span></label>
+        <label class="nr-w">${t('вес', 'weight')} <input type="range" min="-3" max="3" step="1" value="${state.weights[i]}" data-w="${i}"> <b data-wv="${i}"></b></label>
       </div>`,
     ).join('')}
-    <div class="nr-row"><span class="nr-in">${t('порог', 'threshold')}</span><label class="nr-w"><input type="range" min="-3" max="5" step="1" value="${state.th}" data-th> <b data-thv></b></label></div>
+    <div class="nr-row"><span class="nr-in">${t('порог', 'threshold')}</span><label class="nr-w"><input type="range" min="-3" max="5" step="1" value="${state.threshold}" data-th> <b data-thv></b></label></div>
     <div class="formula" data-f></div>
     <p class="nr-out" data-out></p>`;
 
   function drawNeuron() {
-    const sum = state.x.reduce((a, x, i) => a + x * state.w[i], 0);
-    const out = sum >= state.th;
-    state.x.forEach((x, i) => {
+    const sum = state.inputs.reduce((acc, x, i) => acc + x * state.weights[i], 0);
+    const fires = sum >= state.threshold;
+    state.inputs.forEach((x, i) => {
       neuron.querySelector(`[data-xv="${i}"]`).textContent = `(x = ${x})`;
-      neuron.querySelector(`[data-wv="${i}"]`).textContent = state.w[i];
+      neuron.querySelector(`[data-wv="${i}"]`).textContent = state.weights[i];
     });
-    neuron.querySelector('[data-thv]').textContent = state.th;
-    neuron.querySelector('[data-f]').innerHTML = `${state.x.map((x, i) => `${x}×${state.w[i] < 0 ? `(${state.w[i]})` : state.w[i]}`).join(' + ')} = <b>${sum}</b> ${out ? '≥' : '<'} ${state.th}`;
-    const o = neuron.querySelector('[data-out]');
-    o.className = 'nr-out ' + (out ? 'yes' : 'no');
-    o.textContent = out ? t('Нейрон: 1 — идём гулять', 'Neuron: 1 — let’s go for a walk') : t('Нейрон: 0 — остаёмся дома', 'Neuron: 0 — staying at home');
+    neuron.querySelector('[data-thv]').textContent = state.threshold;
+    neuron.querySelector('[data-f]').innerHTML = `${state.inputs.map((x, i) => `${x}×${state.weights[i] < 0 ? `(${state.weights[i]})` : state.weights[i]}`).join(' + ')} = <b>${sum}</b> ${fires ? '≥' : '<'} ${state.threshold}`;
+    const output = neuron.querySelector('[data-out]');
+    output.className = 'nr-out ' + (fires ? 'yes' : 'no');
+    output.textContent = fires ? t('Нейрон: 1 — идём гулять', 'Neuron: 1 — let’s go for a walk') : t('Нейрон: 0 — остаёмся дома', 'Neuron: 0 — staying at home');
   }
   neuron.addEventListener('input', (e) => {
     const el = e.target;
-    if (el.dataset.x !== undefined) state.x[+el.dataset.x] = el.checked ? 1 : 0;
-    if (el.dataset.w !== undefined) state.w[+el.dataset.w] = +el.value;
-    if (el.dataset.th !== undefined) state.th = +el.value;
+    if (el.dataset.x !== undefined) state.inputs[+el.dataset.x] = el.checked ? 1 : 0;
+    if (el.dataset.w !== undefined) state.weights[+el.dataset.w] = +el.value;
+    if (el.dataset.th !== undefined) state.threshold = +el.value;
     drawNeuron();
   });
   drawNeuron();

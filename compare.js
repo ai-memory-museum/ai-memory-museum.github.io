@@ -17,14 +17,14 @@
 
   function engine(bot) {
     if (!engines.has(bot.id)) {
-      const e = bot.create ? bot.create() : { closed: true };
-      if (ASKS_NAME.has(bot.id)) e.reply(t('Меня зовут Гость', 'My name is Guest'));
-      engines.set(bot.id, e);
+      const created = bot.create ? bot.create() : { closed: true };
+      if (ASKS_NAME.has(bot.id)) created.reply(t('Меня зовут Гость', 'My name is Guest'));
+      engines.set(bot.id, created);
     }
     return engines.get(bot.id);
   }
 
-  const talks = (e) => !e.closed && !(e.keyed && !store.get('museum-key-' + e.keyed.id, ''));
+  const talks = (eng) => !eng.closed && !(eng.keyed && !store.get('museum-key-' + eng.keyed.id, ''));
   const BOTS = window.MUSEUM_BOTS.filter((b) => !b.hidden && !b.aside && talks(engine(b)));
 
   function cards() {
@@ -46,13 +46,12 @@
     await Promise.all(
       BOTS.map(async (b) => {
         const box = grid.querySelector(`[data-id="${b.id}"] .cmp-text`);
-        const e = engine(b);
         box.className = 'cmp-text';
         box.classList.add('cmp-wait');
         box.textContent = '…';
         let answer;
         try {
-          answer = asText(await e.reply(q));
+          answer = asText(await engine(b).reply(q));
         } catch {
           answer = '...';
         }
@@ -66,8 +65,8 @@
 
   tries.innerHTML = TRIES.map((q) => `<button type="button" class="chip">${q}</button>`).join('');
   tries.addEventListener('click', (e) => {
-    const b = e.target.closest('.chip');
-    if (b) ask(b.textContent);
+    const chip = e.target.closest('.chip');
+    if (chip) ask(chip.textContent);
   });
   form.addEventListener('submit', (e) => {
     e.preventDefault();
