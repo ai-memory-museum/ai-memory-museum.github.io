@@ -605,5 +605,6 @@
   renderAside();
   const start = location.hash.slice(1);
   go(start);
-  if (start === 'vitrina') $('vitrina').scrollIntoView();
+  const section = start && !BOTS.some((b) => b.id === start) && $(start);
+  if (section) section.scrollIntoView();
 })();
