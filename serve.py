@@ -1,5 +1,5 @@
 import http.server
-import functools
+import os
 
 
 class NoCache(http.server.SimpleHTTPRequestHandler):
@@ -8,4 +8,5 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 
-http.server.ThreadingHTTPServer(('127.0.0.1', 8790), functools.partial(NoCache, directory='/Users/zaharfursa/ai-museum')).serve_forever()
+port = int(os.environ.get('PORT', 8790))
+http.server.ThreadingHTTPServer(('127.0.0.1', port), NoCache).serve_forever()
