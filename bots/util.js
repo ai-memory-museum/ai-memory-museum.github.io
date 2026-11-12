@@ -58,8 +58,6 @@ window.MU = (() => {
     };
   };
 
-  const fill = (tpl, m) => tpl.replace(/\$(\d)/g, (_, n) => reflect(m[n] || ''));
-
   const store = {
     get(k, d) {
       try {
@@ -87,7 +85,6 @@ window.MU = (() => {
     66: 'ледяной дождь', 67: 'ледяной дождь', 71: 'небольшой снег', 73: 'снег', 75: 'снегопад', 77: 'снежная крупа',
     80: 'ливни', 81: 'ливни', 82: 'сильные ливни', 85: 'снегопад', 86: 'сильный снегопад', 95: 'гроза', 96: 'гроза с градом', 99: 'гроза с градом',
   };
-
 
   const WEATHER_EN = {
     0: 'clear sky', 1: 'mainly clear', 2: 'partly cloudy', 3: 'overcast', 45: 'fog', 48: 'rime fog',
@@ -137,7 +134,6 @@ window.MU = (() => {
     }
   }
 
-
   const calc = (raw) => {
     const expr = raw
       .trim()
@@ -172,6 +168,6 @@ window.MU = (() => {
     };
   };
 
-  return { lang, en, t, localize, story, norm, pick, reflect, cycler, fill, store, parseName, weather, calc };
+  return { lang, en, t, localize, story, norm, pick, reflect, cycler, store, parseName, weather, calc };
 })();
 

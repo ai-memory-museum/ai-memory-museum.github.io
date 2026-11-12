@@ -76,15 +76,14 @@
       if (g && g.year === b.year) g.bots.push(b);
       else groups.push({ year: b.year, bots: [b] });
     });
-    groups.forEach((g, n) => {
+    groups.forEach((g) => {
       g.era = ERAS.findIndex((e) => g.year <= e.to);
-      g.swap = n > 0 && groups[n - 1].era !== g.era;
       g.fork = g.bots.length > 1;
       g.sides = g.bots.map((_, i) => (g.fork ? (i % 2 ? 1 : -1) : 0));
       g.marks = g.bots.map((b, i) => {
         const el = document.createElement('button');
         el.type = 'button';
-        el.className = 'mark' + (g.sides[i] > 0 ? ' below' : '') + '';
+        el.className = 'mark' + (g.sides[i] > 0 ? ' below' : '');
         el.dataset.id = b.id;
         el.classList.add(b.theme);
         el.innerHTML = `<span class="dot"></span><span class="lbl"><b>${b.name}</b><i>${b.year}</i></span>`;
