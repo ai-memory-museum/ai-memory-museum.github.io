@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Memory — тест Тьюринга</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=PT+Mono&family=PT+Serif:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script>try{if(localStorage.getItem('museum-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}try{if(!sessionStorage.getItem('museum-logo')){sessionStorage.setItem('museum-logo','1');document.documentElement.classList.add('logo-spin')}}catch(e){}</script>
+  <link rel="stylesheet" href="style.css?v=158">
+</head>
+<body>
+  <header class="top story-top">
+    <div class="brand"><h1><a href="index.html"><svg class="logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true"><circle cx="32" cy="31.6" r="28"/><circle cx="32" cy="35.5" r="19.5"/><circle cx="32" cy="38.9" r="11.5"/><circle cx="32" cy="41.2" r="4.6" fill="#c2462c" stroke="none"/></svg>AI Memory</a></h1><button type="button" class="lang theme-btn" id="themeBtn">☾</button><button type="button" class="lang" id="langBtn">EN</button></div>
+  </header>
+  <main class="story turingpage">
+    <a class="back" id="turingBack" href="index.html#turing">← к линии и разговору</a>
+    <h2 id="turingTitle">Тест Тьюринга</h2>
+    <p class="lead" id="turingLead"></p>
+    <div class="turing" id="turingBox"></div>
+  </main>
+  <script src="bots/util.js?v=158"></script>
+  <script src="turing-data.js?v=158"></script>
+  <script src="turing.js?v=158"></script>
+  <script src="theme.js?v=158"></script>
+</body>
+</html>

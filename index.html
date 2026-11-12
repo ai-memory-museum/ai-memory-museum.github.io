@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=PT+Mono&family=PT+Serif:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script>try{if(localStorage.getItem('museum-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}try{if(!sessionStorage.getItem('museum-logo')){sessionStorage.setItem('museum-logo','1');document.documentElement.classList.add('logo-spin')}}catch(e){}</script>
+  <link rel="stylesheet" href="style.css?v=158">
+</head>
+<body>
+  <header class="top" id="top">
+    <div class="brand">
+      <h1><svg class="logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true"><circle cx="32" cy="31.6" r="28"/><circle cx="32" cy="35.5" r="19.5"/><circle cx="32" cy="38.9" r="11.5"/><circle cx="32" cy="41.2" r="4.6" fill="#c2462c" stroke="none"/></svg>AI Memory</h1>
+      <button type="button" class="lang theme-btn" id="themeBtn">☾</button><button type="button" class="lang" id="langBtn">EN</button>
+    </div>
+    <nav class="timeline" aria-label="Линия времени" data-en-label="Timeline">
+      <div class="track" id="track"></div>
+    </nav>
+  </header>
+
+  <main class="exhibit">
+    <article class="card" id="card"></article>
+
+    <section class="chat" aria-label="Разговор" data-en-label="Chat">
+      <div class="chat-head" id="chatHead"></div>
+      <div class="term" id="term">
+        <div class="term-bar">
+          <span class="lights"><i></i><i></i><i></i></span>
+          <span class="term-title" id="chatTitle"></span>
+          <span class="chat-tools">
+            <button type="button" class="tool" id="micBtn" hidden data-en="mic">микрофон</button>
+            <button type="button" class="tool" id="keyBtn" hidden data-en="key">ключ</button>
+            <button type="button" class="tool" id="voiceBtn" hidden data-en="sound">звук</button>
+            <button type="button" class="tool" id="resetBtn" data-en="reset">сброс</button>
+          </span>
+        </div>
+        <form class="keybar" id="keybar" autocomplete="off" hidden>
+          <input id="keyInput" type="password" autocomplete="off" spellcheck="false" aria-label="Ключ API" data-en-label="API key">
+          <button type="submit" class="tool" data-en="save">сохранить</button>
+          <button type="button" class="tool" id="keyDel" data-en="delete">удалить</button>
+        </form>
+        <div class="meters" id="meters"></div>
+        <div class="screen" id="screen">
+          <div id="log" aria-live="polite"></div>
+          <div class="chips" id="chips"></div>
+          <form class="composer" id="form" autocomplete="off">
+            <span class="prompt">&gt;</span>
+            <input id="input" type="text" maxlength="300" spellcheck="false" placeholder="введите текст и нажмите Enter" aria-label="Ваше сообщение" data-en-label="Your message">
+            <button type="submit" class="send" aria-label="Отправить" data-en-label="Send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
+          </form>
+        </div>
+      </div>
+      <div class="term-info" id="termInfo"></div>
+    </section>
+  </main>
+
+  <section class="play" id="duel">
+    <h2 data-en="Two bots talk">Разговор двух ботов</h2>
+    <p class="compare-intro" data-en="Pick two bots and watch them talk to each other. Nobody writes their lines: each one answers the other with its own maths.">Выберите двух ботов и посмотрите, как они говорят друг с другом. Реплики никто не пишет: каждый отвечает другому по своей математике.</p>
+    <div class="duel-pick" id="duelPick"></div>
+    <div class="duel-stage">
+      <div class="duel-side" id="duelA"></div>
+      <div class="duel-log" id="duelLog"></div>
+      <div class="duel-side" id="duelB"></div>
+    </div>
+    <div class="duel-foot"><button type="button" id="duelGo" data-en="Start the conversation">Начать разговор</button></div>
+  </section>
+
+  <section class="compare" id="compare">
+    <h2 data-en="One question for everyone">Один вопрос — всем</h2>
+    <p class="compare-intro" data-en="Ask one question and see how bots from different years answer it. From 1966 to 2014: from rules to bots that learn from people.">Задайте один вопрос и посмотрите, как на него отвечают боты разных лет. С 1966 по 2014 год: от правил к ботам, которые учатся у людей.</p>
+    <form class="compare-form" id="compareForm" autocomplete="off">
+      <input id="compareInput" type="text" maxlength="200" placeholder="Например: кто ты?" aria-label="Вопрос для всех ботов" data-en-label="A question for all bots">
+      <button type="submit" data-en="Ask everyone">Спросить всех</button>
+    </form>
+    <div class="compare-tries" id="compareTries"></div>
+    <div class="compare-grid" id="compareGrid"></div>
+    <a class="mathlink" href="math.html" data-en="How do they count? The maths of bots →">Как они считают? Математика ботов →</a>
+  </section>
+
+  <section class="play" id="turing">
+    <h2 data-en="Turing test">Тест Тьюринга</h2>
+    <p class="compare-intro" data-en="In 1950 Alan Turing proposed the “imitation game”: a judge chats with hidden partners and has to tell the machine from the human. Now you are the judge.">В 1950 году Алан Тьюринг предложил «игру в имитацию»: судья переписывается со скрытыми собеседниками и должен отличить машину от человека. Теперь судья — вы.</p>
+    <p class="tt-facts" data-en="Real transcripts from scientific papers · 8 rounds · about 5 minutes">Настоящие записи из научных статей · 8 раундов · около 5 минут</p>
+    <a class="mathlink" href="turing.html#start" data-en="Take the test →">Пройти тест →</a>
+  </section>
+
+  <section class="shelf" id="vitrina">
+    <h2 data-en="Museum archive">Архив музея</h2>
+    <p class="shelf-intro" data-en="Bots and documents that are not on the timeline. You cannot talk to them here, but you can read about each one: how it appeared, how it worked and what became of it.">Боты и документы, которых нет на линии времени. Поговорить с ними здесь нельзя, но про каждый можно прочитать: как он появился, как работал и что с ним стало.</p>
+    <div class="shelf-list" id="asideList"></div>
+  </section>
+
+  <footer class="note" data-en="The first talkers were not neural networks yet: they worked by rules and patterns written by people. Most of their answers here are recreated from descriptions of the original programs; ELIZA runs her original 1965 script. ChatGPT and Claude at the end of the line are real neural networks: they answer through the API with your key.">
+    Первые собеседники ещё не были нейросетями: они работали по правилам и шаблонам, которые написали люди.
+    Их ответы здесь — воссоздание по описаниям оригинальных программ, на русском языке.
+    ChatGPT и Claude в конце линии — настоящие нейросети: они отвечают через API по вашему ключу.
+  </footer>
+
+  <script src="bots/util.js?v=158"></script>
+  <script src="bots/eliza.js?v=158"></script>
+  <script src="bots/parry.js?v=158"></script>
+  <script src="bots/racter.js?v=158"></script>
+  <script src="bots/jabberwacky.js?v=158"></script>
+  <script src="bots/sbaitso.js?v=158"></script>
+  <script src="bots/alice.js?v=158"></script>
+  <script src="bots/smarterchild.js?v=158"></script>
+  <script src="bots/cleverbot.js?v=158"></script>
+  <script src="bots/siri.js?v=158"></script>
+  <script src="bots/megahal.js?v=158"></script>
+  <script src="bots/eugene.js?v=158"></script>
+  <script src="bots/chatgpt.js?v=158"></script>
+  <script src="bots/claude.js?v=158"></script>
+  <script src="stories/eliza.js?v=158"></script>
+  <script src="stories/alisa.js?v=158"></script>
+  <script src="stories/bard.js?v=158"></script>
+  <script src="stories/chatgpt.js?v=158"></script>
+  <script src="stories/claude.js?v=158"></script>
+  <script src="stories/deepseek.js?v=158"></script>
+  <script src="stories/cleverbot.js?v=158"></script>
+  <script src="stories/eugene.js?v=158"></script>
+  <script src="stories/siri.js?v=158"></script>
+  <script src="stories/smarterchild.js?v=158"></script>
+  <script src="stories/tay.js?v=158"></script>
+  <script src="stories/alice.js?v=158"></script>
+  <script src="stories/jabberwacky.js?v=158"></script>
+  <script src="stories/parry.js?v=158"></script>
+  <script src="stories/racter.js?v=158"></script>
+  <script src="stories/sbaitso.js?v=158"></script>
+  <script src="stories/shrdlu.js?v=158"></script>
+  <script src="stories/eliza-parry.js?v=158"></script>
+  <script src="stories/alexa.js?v=158"></script>
+  <script src="stories/gigachat.js?v=158"></script>
+  <script src="stories/en/eliza.js?v=158"></script>
+  <script src="stories/en/parry.js?v=158"></script>
+  <script src="stories/en/racter.js?v=158"></script>
+  <script src="stories/en/jabberwacky.js?v=158"></script>
+  <script src="stories/en/sbaitso.js?v=158"></script>
+  <script src="stories/en/alice.js?v=158"></script>
+  <script src="stories/en/smarterchild.js?v=158"></script>
+  <script src="stories/en/cleverbot.js?v=158"></script>
+  <script src="stories/en/siri.js?v=158"></script>
+  <script src="stories/en/eugene.js?v=158"></script>
+  <script src="stories/en/tay.js?v=158"></script>
+  <script src="stories/en/alisa.js?v=158"></script>
+  <script src="stories/en/chatgpt.js?v=158"></script>
+  <script src="stories/en/claude.js?v=158"></script>
+  <script src="stories/en/bard.js?v=158"></script>
+  <script src="stories/en/deepseek.js?v=158"></script>
+  <script src="stories/en/shrdlu.js?v=158"></script>
+  <script src="stories/en/eliza-parry.js?v=158"></script>
+  <script src="stories/en/alexa.js?v=158"></script>
+  <script src="stories/en/gigachat.js?v=158"></script>
+  <script src="bots/archive.js?v=158"></script>
+  <script src="app.js?v=158"></script>
+  <script src="compare.js?v=158"></script>
+  <script src="play.js?v=158"></script>
+  <script src="theme.js?v=158"></script>
+</body>
+</html>
